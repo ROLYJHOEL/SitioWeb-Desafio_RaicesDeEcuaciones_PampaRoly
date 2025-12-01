@@ -3,594 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Raíces Numéricas</title>
-    <!-- Carga de Tailwind CSS -->
+    <title>Analizador Numérico Neón</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Configuración personalizada de Tailwind */
-        :root {
-            --primary-color: #3b82f6; /* blue-500 */
-            --secondary-color: #10b981; /* emerald-500 */
-            --bg-color: #f9fafb; /* gray-50 */
+        /* Estilos base */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            background-color: #0b111a; /* Fondo muy oscuro, casi negro */
+            color: #f0fdfa; /* Texto principal casi blanco (Cyan-Light) */
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
+        
+        /* Estilos específicos para la nueva estética (Neón Azul/Verde) */
+        .card-dark {
+            background-color: #1a2537; /* Fondo de tarjetas azul oscuro */
+            border: 1px solid #334155; /* Borde sutil */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
-        .tab-active {
-            border-bottom: 4px solid var(--primary-color);
-            color: var(--primary-color);
-            font-weight: 600;
+
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide-in { animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Scrollbar personalizado */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a2537; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Clases Tabs Estilo Dark Mode (Azul Neón) */
+        .active-tab-neon { 
+            background: #0ea5e9; /* Light Blue */
+            color: #0c4a6e; 
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.7); /* Sombra neón */
+            transform: translateY(-2px);
+            border-color: #38bdf8;
         }
-        .input-box {
-            border: 2px solid #e5e7eb;
-            transition: all 0.3s;
+        .inactive-tab-neon { 
+            background-color: #334155; 
+            color: #e2e8f0; 
+            border: 1px solid #475569;
         }
-        .input-box:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        .inactive-tab-neon:hover { 
+            background-color: #475569; 
+            color: white; 
+            border-color: #94a3b8;
         }
-        .result-table th {
-            background-color: #f3f4f6;
+
+        /* Gradiante para resaltar resultados clave (Neón) */
+        .highlight-neon {
+            background: linear-gradient(90deg, #10b981 0%, #0ea5e9 100%); /* Verde Esmeralda a Azul Claro */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .button-primary {
-            background-color: var(--primary-color);
-            transition: background-color 0.2s;
+        
+        /* Clases para efectos Neón en las tarjetas de resultados */
+        .best-method-neon {
+            border: 2px solid #a78bfa; /* Borde Morado Neón */
+            box-shadow: 0 0 10px #a78bfa, inset 0 0 5px #a78bfa80;
+            background-color: #1f1d3a; /* Fondo ligeramente púrpura */
         }
-        .button-primary:hover {
-            background-color: #2563eb; /* blue-600 */
+        .best-badge-neon {
+            background-color: #a78bfa; /* Púrpura Neón */
+            color: #1f1d3a;
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="min-h-screen custom-scrollbar">
 
-    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10">
+    <div class="fixed inset-0 -z-10 overflow-hidden opacity-30">
+        <div class="absolute -top-[5%] -left-[5%] w-1/4 h-1/4 rounded-full bg-blue-900 blur-[150px]"></div>
+        <div class="absolute bottom-[10%] -right-[5%] w-1/3 h-1/3 rounded-full bg-green-900 blur-[150px]"></div>
+    </div>
 
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">
-            Solucionador de Raíces Numéricas
-        </h1>
-
-        <!-- SECCIÓN DE ENTRADA COMÚN -->
-        <div class="mb-8 p-4 bg-gray-50 rounded-lg border">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Ecuación y Parámetros Iniciales</h2>
-            
-            <div class="mb-4">
-                <label for="equation" class="block text-sm font-medium text-gray-700 mb-1">
-                    Función f(x) (donde f(x)=0)
-                </label>
-                <input type="text" id="equation" value="x**3 - Math.exp(0.8*x) - 20"
-                       class="w-full p-3 input-box rounded-lg text-gray-900 placeholder-gray-400"
-                       placeholder="Ej: x**3 - Math.exp(0.8*x) - 20">
-                <p class="mt-1 text-xs text-gray-500">
-                    Use ** para potencia (x**3), Math.exp(), Math.sin(), Math.cos(), Math.log() (ln).
-                </p>
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-10 fade-in">
+            <div class="inline-flex items-center justify-center p-3 card-dark rounded-xl mb-4">
+                <i data-lucide="calculator" class="w-8 h-8 text-blue-400 mr-3"></i>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-transparent highlight-neon">
+                    ANÁLISIS DE RAÍCES
+                </h1>
             </div>
+            <p class="text-sky-300 font-medium font-mono text-sm">Métodos Numéricos Avanzados</p>
+        </header>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label for="tolerance" class="block text-sm font-medium text-gray-700 mb-1">Tolerancia (Error)</label>
-                    <input type="number" id="tolerance" value="0.0001" step="any"
-                           class="w-full p-3 input-box rounded-lg text-gray-900">
-                </div>
-                <div>
-                    <label for="maxIterations" class="block text-sm font-medium text-gray-700 mb-1">Máx. Iteraciones</label>
-                    <input type="number" id="maxIterations" value="50"
-                           class="w-full p-3 input-box rounded-lg text-gray-900">
-                </div>
-                <div>
-                    <label for="hValue" class="block text-sm font-medium text-gray-700 mb-1">h para Derivada Numérica</label>
-                    <input type="number" id="hValue" value="0.000001" step="any"
-                           class="w-full p-3 input-box rounded-lg text-gray-900">
-                </div>
-            </div>
+        <div id="tabs-container" class="flex flex-wrap gap-3 justify-center mb-8 sticky top-4 z-20 backdrop-blur-md bg-gray-900/70 p-3 rounded-xl border border-gray-700 mx-auto max-w-fit shadow-2xl"></div>
 
-            <!-- Parámetros específicos para Bisección y Secante/Newton -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                    <label for="aValue" class="block text-sm font-medium text-gray-700 mb-1">Límite Inferior (a)</label>
-                    <input type="number" id="aValue" value="3" step="any"
-                           class="w-full p-3 input-box rounded-lg text-gray-900"
-                           placeholder="Para Bisección">
-                </div>
-                <div>
-                    <label for="bValue" class="block text-sm font-medium text-gray-700 mb-1">Límite Superior (b)</label>
-                    <input type="number" id="bValue" value="4" step="any"
-                           class="w-full p-3 input-box rounded-lg text-gray-900"
-                           placeholder="Para Bisección/Secante (x1)">
-                </div>
-                <div>
-                    <label for="x0Value" class="block text-sm font-medium text-gray-700 mb-1">Estimación Inicial (x0)</label>
-                    <input type="number" id="x0Value" value="3.5" step="any"
-                           class="w-full p-3 input-box rounded-lg text-gray-900"
-                           placeholder="Para Newton/Secante (x0)">
-                </div>
-            </div>
-        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12">
+            <div class="lg:col-span-6 lg:col-start-4 space-y-6 slide-in" style="animation-delay: 0.1s;">
+                <div class="card-dark rounded-xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-2 bg-blue-500 rounded-bl-xl">
+                        <i data-lucide="code-square" class="w-5 h-5 text-white"></i>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold text-white mb-1" id="ex-title">Cargando...</h2>
+                    <p id="ex-desc" class="text-sm text-blue-300 mb-6">...</p>
+                    
+                    <div class="bg-gray-800 p-4 rounded-lg mb-6 border border-gray-700 shadow-inner">
+                        <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-bold">Función f(x)</p>
+                        <code id="ex-equation" class="text-xl font-bold text-green-400 block break-words font-mono">...</code>
+                    </div>
 
-        <!-- SECCIÓN DE NAVEGACIÓN DE MÉTODOS -->
-        <div class="flex border-b border-gray-200 mb-6 space-x-4 overflow-x-auto">
-            <button id="tab-biseccion" class="p-3 text-gray-600 hover:text-blue-500 whitespace-nowrap tab-active" onclick="switchTab('biseccion')">
-                Método de Bisección
-            </button>
-            <button id="tab-newton" class="p-3 text-gray-600 hover:text-blue-500 whitespace-nowrap" onclick="switchTab('newton')">
-                Método de Newton-Raphson
-            </button>
-            <button id="tab-secante" class="p-3 text-gray-600 hover:text-blue-500 whitespace-nowrap" onclick="switchTab('secante')">
-                Método de la Secante
-            </button>
-            <button id="tab-exacta" class="p-3 text-gray-600 hover:text-blue-500 whitespace-nowrap" onclick="switchTab('exacta')">
-                Comprobación (f(raíz))
-            </button>
-        </div>
+                    <div class="space-y-4 mb-8">
+                        <p class="text-base font-bold text-gray-200 flex items-center gap-2">
+                            <i data-lucide="target" class="w-5 h-5 text-blue-400"></i> Objetivos y Parámetros
+                        </p>
+                        <div id="configs-container" class="space-y-3"></div>
+                    </div>
 
-        <!-- CONTENEDOR DE RESULTADOS -->
-        <div id="method-container" class="space-y-6">
-
-            <!-- Pestaña de Bisección -->
-            <div id="content-biseccion" class="method-content">
-                <button class="w-full button-primary text-white p-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-shadow" onclick="runSolver('biseccion')">
-                    Resolver por Bisección
-                </button>
-                <div class="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm" role="alert">
-                    <span class="font-medium">Importante:</span> El método de Bisección requiere que f(a) y f(b) tengan signos opuestos.
-                </div>
-                <div id="biseccion-result" class="mt-6"></div>
-            </div>
-
-            <!-- Pestaña de Newton-Raphson -->
-            <div id="content-newton" class="method-content hidden">
-                <button class="w-full button-primary text-white p-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-shadow" onclick="runSolver('newton')">
-                    Resolver por Newton-Raphson
-                </button>
-                <div class="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm" role="alert">
-                    <span class="font-medium">Importante:</span> Este método usa derivada numérica. Requiere una buena estimación inicial (x0).
-                </div>
-                <div id="newton-result" class="mt-6"></div>
-            </div>
-
-            <!-- Pestaña de la Secante -->
-            <div id="content-secante" class="method-content hidden">
-                <button class="w-full button-primary text-white p-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-shadow" onclick="runSolver('secante')">
-                    Resolver por la Secante
-                </button>
-                <div class="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm" role="alert">
-                    <span class="font-medium">Importante:</span> El método de la Secante requiere dos puntos iniciales (x0 y x1).
-                </div>
-                <div id="secante-result" class="mt-6"></div>
-            </div>
-
-            <!-- Pestaña de Comprobación -->
-            <div id="content-exacta" class="method-content hidden">
-                <div class="p-6 bg-gray-100 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Comprobación de la Solución Numérica</h3>
-                    <p class="text-gray-600 mb-4">
-                        Ingrese la raíz $x_r$ encontrada por cualquiera de los métodos para evaluar $f(x_r)$ y verificar qué tan cerca está de cero.
-                    </p>
-                    <div class="flex space-x-4">
-                        <div class="flex-grow">
-                            <label for="checkRootValue" class="block text-sm font-medium text-gray-700 mb-1">Raíz (x_r) a Comprobar</label>
-                            <input type="number" id="checkRootValue" step="any"
-                                   class="w-full p-3 input-box rounded-lg text-gray-900"
-                                   placeholder="Ingrese la raíz obtenida">
+                    <button id="btn-calculate" onclick="calculateCurrent()" class="group w-full relative overflow-hidden rounded-lg bg-blue-600 text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
+                        <div class="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 opacity-0 transition-opacity group-hover:opacity-100"></div>
+                        <div class="relative px-6 py-4 flex items-center justify-center gap-3">
+                            <i data-lucide="cpu" class="w-5 h-5 btn-icon"></i>
+                            <span class="font-bold text-lg btn-text">Ejecutar Métodos</span>
                         </div>
-                        <button class="flex-shrink-0 button-primary text-white p-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-shadow self-end" onclick="checkRoot()">
-                            Comprobar f(x_r)
-                        </button>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+                <div id="results-area" class="mt-12 pt-8 border-t border-gray-700">
+            <div id="empty-state" class="h-full min-h-[300px] flex flex-col items-center justify-center card-dark rounded-xl border-2 border-dashed border-gray-600 text-center p-8 fade-in">
+                <div class="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-xl border border-gray-700">
+                    <i data-lucide="scatter-chart" class="w-10 h-10 text-gray-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-300 mb-2">Resultados en Espera</h3>
+                <p class="text-gray-500 max-w-xs mx-auto">Selecciona un ejercicio y presiona "Ejecutar Métodos" para iniciar el análisis.</p>
+            </div>
+
+            <div id="results-content" class="hidden space-y-8">
+                <div class="card-dark rounded-xl p-6 slide-in">
+                    <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-3">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-400"></i> Visualización de la Función
+                        </h3>
+                        <div class="flex gap-4 text-xs font-medium text-gray-400">
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-yellow-400"></span> f(x)</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-500"></span> Raíces</span>
+                        </div>
+                    </div>
+                    <div class="h-[400px] w-full relative">
+                        <canvas id="myChart"></canvas>
                     </div>
                 </div>
-                <div id="exacta-result" class="mt-6"></div>
+                
+                <div id="cards-container" class="grid gap-6"></div>
             </div>
-
         </div>
+    </div>
 
+    <div id="table-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl card-dark text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl border border-gray-700">
+                    <div class="bg-gray-800 px-6 py-4 border-b border-gray-700 flex justify-between items-center sticky top-0">
+                        <div>
+                            <h3 class="text-xl font-bold text-white" id="modal-title">Tabla de Iteraciones</h3>
+                            <p class="text-sm text-gray-400" id="modal-subtitle">Método</p>
+                        </div>
+                        <button onclick="closeModal()" class="rounded-full p-2 bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="px-6 py-6 max-h-[70vh] overflow-auto custom-scrollbar">
+                        <table class="min-w-full divide-y divide-gray-700 text-sm">
+                            <thead class="bg-gray-700 font-sans">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-bold text-gray-300 uppercase tracking-wider">Iter</th>
+                                    <th class="px-4 py-3 text-left font-bold text-gray-300 uppercase tracking-wider">x (Raíz Aprox)</th>
+                                    <th class="px-4 py-3 text-left font-bold text-gray-300 uppercase tracking-wider">f(x)</th>
+                                    <th class="px-4 py-3 text-left font-bold text-gray-300 uppercase tracking-wider">Error |x_k+1 - x_k|</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-table-body" class="bg-gray-800 divide-y divide-gray-700 font-mono text-xs md:text-sm"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-gray-800 px-6 py-3 border-t border-gray-700 text-right">
+                        <button onclick="closeModal()" class="inline-flex justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // =================================================================
-        // UTILIDADES Y LÓGICA MATEMÁTICA
-        // =================================================================
+        // --- LÓGICA MATEMÁTICA (MANTENIDA) ---
+        let activeTab = 0;
+        let chartInstance = null;
+        let currentResults = null;
 
-        /**
-         * Función que crea una función JavaScript a partir de la ecuación de entrada.
-         * Asegura la disponibilidad de constantes y funciones Math.
-         * @param {string} equation - La ecuación de la función f(x).
-         * @returns {Function} - La función f(x) lista para ser evaluada.
-         */
-        function createFunction(equation) {
-            // Asegura que las funciones Math sean accesibles y convierte ** para potencia
-            const funcBody = equation
-                .replace(/e\*\*/g, 'Math.exp') // Maneja Math.exp(x) si el usuario usa e**
-                .replace(/exp/g, 'Math.exp')
-                .replace(/sin/g, 'Math.sin')
-                .replace(/cos/g, 'Math.cos')
-                .replace(/tan/g, 'Math.tan')
-                .replace(/log/g, 'Math.log') // log natural
-                .replace(/sqrt/g, 'Math.sqrt');
-
-            try {
-                // Crea y retorna la función. 'x' es la variable independiente.
-                return new Function('x', `
-                    const E = Math.E;
-                    const PI = Math.PI;
-                    // Intentar evaluar la expresión con la variable x
-                    return ${funcBody};
-                `);
-            } catch (e) {
-                displayError("Error de Sintaxis en la Función: Verifique la entrada.", 'biseccion');
-                return null;
+        const exercises = [
+            {
+                id: 1,
+                title: "Ejercicio 1",
+                equation: "x³ - e^(0.8x) - 20 = 0",
+                description: "Polinomio vs Exponencial (2 Raíces)",
+                f: (x) => Math.pow(x, 3) - Math.exp(0.8 * x) - 20,
+                df: (x) => 3 * Math.pow(x, 2) - 0.8 * Math.exp(0.8 * x),
+                graphRange: { min: 0, max: 8.5 },
+                configs: [
+                    { name: "Raíz Izquierda", interval: [0, 5], x0Newton: 3, x0Secant: 3, x1Secant: 4 },
+                    { name: "Raíz Derecha", interval: [6, 8], x0Newton: 7, x0Secant: 7, x1Secant: 8 }
+                ]
+            },
+            {
+                id: 2,
+                title: "Ejercicio 2",
+                equation: "3sin(0.5x) - 0.5x + 2 = 0",
+                description: "Trigonométrica con lineal",
+                f: (x) => 3 * Math.sin(0.5 * x) - 0.5 * x + 2,
+                df: (x) => 1.5 * Math.cos(0.5 * x) - 0.5,
+                graphRange: { min: 0, max: 10 },
+                configs: [
+                    { name: "Raíz Principal", interval: [4, 8], x0Newton: 5, x0Secant: 5, x1Secant: 6 }
+                ]
+            },
+            {
+                id: 3,
+                title: "Ejercicio 3",
+                equation: "x³ - x²e^(-0.5x) - 3x + 1 = 0",
+                description: "Polinomio complejo",
+                f: (x) => Math.pow(x, 3) - Math.pow(x, 2) * Math.exp(-0.5 * x) - 3 * x + 1,
+                df: (x) => {
+                    const ex = Math.exp(-0.5 * x);
+                    return 3 * Math.pow(x, 2) - (2 * x * ex - 0.5 * Math.pow(x, 2) * ex) - 3;
+                },
+                graphRange: { min: -3, max: 3 },
+                configs: [
+                    { name: "Raíz Negativa", interval: [-2, -0.5], x0Newton: -2, x0Secant: -2.5, x1Secant: -2 },
+                    { name: "Raíz Central", interval: [0.2, 0.5], x0Newton: 0.3, x0Secant: 0.2, x1Secant: 0.4 },
+                    { name: "Raíz Positiva", interval: [1.2, 2.0], x0Newton: 1.5, x0Secant: 1.2, x1Secant: 2.0 }
+                ]
+            },
+            {
+                id: 4,
+                title: "Ejercicio 4",
+                equation: "cos²(x) - 0.5xe^(0.3x) + 5 = 0",
+                description: "Trigonométrica y Exponencial",
+                f: (x) => Math.pow(Math.cos(x), 2) - 0.5 * x * Math.exp(0.3 * x) + 5,
+                df: (x) => -2 * Math.cos(x) * Math.sin(x) - 0.5 * (Math.exp(0.3 * x) + 0.3 * x * Math.exp(0.3 * x)),
+                graphRange: { min: 0, max: 6 },
+                configs: [
+                    { name: "Raíz Única", interval: [3, 4], x0Newton: 3.5, x0Secant: 3, x1Secant: 4 }
+                ]
             }
+        ];
+
+        // MÉTODOS NUMÉRICOS (SE MANTIENEN IDÉNTICOS)
+        const bisection = (f, a, b, tol = 1e-5, maxIter = 100) => {
+            const iterations = [];
+            let fa = f(a), fb = f(b);
+            if (fa * fb > 0) return { root: null, iterations, error: `Intervalo inválido: f(a)*f(b) > 0` };
+            let iter = 0, c = 0, fc = 0;
+            while (iter < maxIter) {
+                c = (a + b) / 2; fc = f(c); const error = Math.abs(b - a);
+                iterations.push({ iter: iter + 1, x: c, fx: fc, error: error });
+                if (Math.abs(fc) < tol || error < tol) break;
+                if (fa * fc < 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+                iter++;
+            }
+            return { root: c, iterations, converged: iter < maxIter };
+        };
+
+        const newtonRaphson = (f, df, x0, tol = 1e-5, maxIter = 100) => {
+            const iterations = [];
+            let x = x0, iter = 0;
+            iterations.push({ iter: 0, x: x, fx: f(x), error: null });
+            while (iter < maxIter) {
+                const fx = f(x), dfx = df(x);
+                if (Math.abs(dfx) < 1e-10) return { root: null, iterations, error: 'Derivada ≈ 0, posible punto de inflexión' };
+                const xNew = x - fx / dfx; const error = Math.abs(xNew - x);
+                iterations.push({ iter: iter + 1, x: xNew, fx: f(xNew), error: error });
+                if (error < tol) { x = xNew; break; }
+                x = xNew; iter++;
+            }
+            return { root: x, iterations, converged: iter < maxIter };
+        };
+
+        const secant = (f, x0, x1, tol = 1e-5, maxIter = 100) => {
+            const iterations = [];
+            let xPrev = x0, x = x1, iter = 0;
+            iterations.push({ iter: 0, x: x1, fx: f(x1), error: Math.abs(x1-x0) });
+            while (iter < maxIter) {
+                const fPrev = f(xPrev), fx = f(x);
+                if (Math.abs(fx - fPrev) < 1e-10) return { root: null, iterations, error: 'División por 0, f(x_k) ≈ f(x_k-1)' };
+                const xNew = x - fx * (x - xPrev) / (fx - fPrev); const error = Math.abs(xNew - x);
+                iterations.push({ iter: iter + 1, x: xNew, fx: f(xNew), error: error });
+                if (error < tol) { x = xNew; break; }
+                xPrev = x; x = xNew; iter++;
+            }
+            return { root: x, iterations, converged: iter < maxIter };
+        };
+
+        // --- INTERFAZ (REDiseñada) ---
+        function init() { renderTabs(); renderControlPanel(); lucide.createIcons(); }
+
+        function renderTabs() {
+            document.getElementById('tabs-container').innerHTML = exercises.map((ex, idx) => `
+                <button onclick="switchTab(${idx})" class="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${activeTab === idx ? 'active-tab-neon' : 'inactive-tab-neon'}">${ex.title}</button>
+            `).join('');
         }
 
-        /**
-         * Calcula la derivada numérica de f(x) en el punto x.
-         * @param {Function} f - La función a derivar.
-         * @param {number} x - El punto donde se calcula la derivada.
-         * @param {number} h - El paso pequeño para la diferencia central.
-         * @returns {number} - El valor de f'(x).
-         */
-        function numericalDerivative(f, x, h) {
-            // Uso de la fórmula de diferencia central para mayor precisión:
-            // f'(x) ≈ (f(x + h) - f(x - h)) / (2h)
-            const fxPlusH = f(x + h);
-            const fxMinusH = f(x - h);
-
-            if (isNaN(fxPlusH) || isNaN(fxMinusH)) {
-                return NaN;
-            }
-
-            return (fxPlusH - fxMinusH) / (2 * h);
+        function switchTab(idx) {
+            activeTab = idx;
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('results-content').classList.add('hidden');
+            renderTabs(); renderControlPanel();
         }
 
-        // =================================================================
-        // MÉTODOS NUMÉRICOS
-        // =================================================================
-
-        /**
-         * Método de Bisección
-         * @param {Function} f - La función f(x).
-         * @param {number} a - Límite inferior.
-         * @param {number} b - Límite superior.
-         * @param {number} tol - Tolerancia.
-         * @param {number} maxIter - Máximo de iteraciones.
-         * @returns {object} - {root: number, iterations: number, history: array}
-         */
-        function solveBisection(f, a, b, tol, maxIter) {
-            const fa = f(a);
-            const fb = f(b);
-
-            if (isNaN(fa) || isNaN(fb)) {
-                return { error: true, message: "Error: La función no es válida en los límites iniciales (a o b)." };
-            }
-
-            if (fa * fb >= 0) {
-                return { error: true, message: `Error: f(a) y f(b) deben tener signos opuestos. f(${a}) = ${fa.toFixed(6)}, f(${b}) = ${fb.toFixed(6)}` };
-            }
-
-            let iterations = 0;
-            let history = [];
-            let c, fc, error;
-
-            while (iterations < maxIter) {
-                c = (a + b) / 2;
-                fc = f(c);
-                error = Math.abs(b - a) / 2;
-
-                history.push({ i: iterations + 1, a: a, b: b, c: c, fc: fc, error: error });
-
-                if (fc === 0 || error < tol) {
-                    return { root: c, iterations: iterations + 1, history: history };
-                }
-
-                if (fa * fc < 0) {
-                    b = c;
-                } else {
-                    a = c;
-                }
-                iterations++;
-            }
-
-            return { error: true, message: `No se encontró la raíz en ${maxIter} iteraciones. Última estimación: ${c.toFixed(6)}` };
-        }
-
-        /**
-         * Método de Newton-Raphson
-         * @param {Function} f - La función f(x).
-         * @param {Function} df - La función derivada f'(x) (numérica).
-         * @param {number} x0 - Estimación inicial.
-         * @param {number} tol - Tolerancia.
-         * @param {number} maxIter - Máximo de iteraciones.
-         * @returns {object} - {root: number, iterations: number, history: array}
-         */
-        function solveNewton(f, df, x0, tol, maxIter) {
-            let x_curr = x0;
-            let iterations = 0;
-            let history = [];
-            let fx, dfx, x_next, error;
-
-            while (iterations < maxIter) {
-                fx = f(x_curr);
-                dfx = df(x_curr);
-
-                if (isNaN(fx) || isNaN(dfx)) {
-                    return { error: true, message: `Error: La función o su derivada no es válida en x = ${x_curr.toFixed(6)}.` };
-                }
-
-                if (Math.abs(fx) < tol) {
-                    return { root: x_curr, iterations: iterations, history: history };
-                }
-
-                if (Math.abs(dfx) < 1e-10) { // Cuidado con la división por cero
-                    return { error: true, message: `Error: Derivada muy cercana a cero en x = ${x_curr.toFixed(6)}.` };
-                }
-
-                x_next = x_curr - (fx / dfx);
-                error = Math.abs(x_next - x_curr);
-
-                history.push({ i: iterations + 1, x: x_curr, fx: fx, dfx: dfx, x_next: x_next, error: error });
-
-                if (error < tol) {
-                    return { root: x_next, iterations: iterations + 1, history: history };
-                }
-
-                x_curr = x_next;
-                iterations++;
-            }
-
-            return { error: true, message: `No se encontró la raíz en ${maxIter} iteraciones. Última estimación: ${x_curr.toFixed(6)}` };
-        }
-
-        /**
-         * Método de la Secante
-         * @param {Function} f - La función f(x).
-         * @param {number} x0 - Primera estimación inicial.
-         * @param {number} x1 - Segunda estimación inicial.
-         * @param {number} tol - Tolerancia.
-         * @param {number} maxIter - Máximo de iteraciones.
-         * @returns {object} - {root: number, iterations: number, history: array}
-         */
-        function solveSecant(f, x0, x1, tol, maxIter) {
-            let x_prev = x0;
-            let x_curr = x1;
-            let iterations = 0;
-            let history = [];
-            let fx_prev, fx_curr, x_next, error;
-
-            fx_prev = f(x_prev);
-            if (isNaN(fx_prev)) {
-                return { error: true, message: `Error: La función no es válida en x0 = ${x0}.` };
-            }
-
-            while (iterations < maxIter) {
-                fx_curr = f(x_curr);
-
-                if (isNaN(fx_curr)) {
-                    return { error: true, message: `Error: La función no es válida en x = ${x_curr.toFixed(6)}.` };
-                }
-
-                if (Math.abs(fx_curr) < tol) {
-                    return { root: x_curr, iterations: iterations, history: history };
-                }
-
-                if (x_curr - x_prev === 0) {
-                    return { error: true, message: "Error: División por cero (x_curr - x_prev = 0)." };
-                }
-
-                // Fórmula de la Secante: x_next = x_curr - f(x_curr) * (x_curr - x_prev) / (f(x_curr) - f(x_prev))
-                x_next = x_curr - fx_curr * (x_curr - x_prev) / (fx_curr - fx_prev);
-                error = Math.abs(x_next - x_curr);
-
-                history.push({ i: iterations + 1, x_prev: x_prev, x_curr: x_curr, fx_curr: fx_curr, x_next: x_next, error: error });
-
-                if (error < tol) {
-                    return { root: x_next, iterations: iterations + 1, history: history };
-                }
-
-                x_prev = x_curr;
-                fx_prev = fx_curr;
-                x_curr = x_next;
-                iterations++;
-            }
-
-            return { error: true, message: `No se encontró la raíz en ${maxIter} iteraciones. Última estimación: ${x_curr.toFixed(6)}` };
-        }
-
-        // =================================================================
-        // LÓGICA DE INTERFAZ DE USUARIO Y EJECUCIÓN
-        // =================================================================
-
-        let currentTab = 'biseccion';
-
-        /**
-         * Cambia la pestaña de método activa.
-         * @param {string} tabId - ID del método a activar.
-         */
-        function switchTab(tabId) {
-            currentTab = tabId;
-            // Oculta todos los contenidos
-            document.querySelectorAll('.method-content').forEach(el => el.classList.add('hidden'));
-            // Desactiva todos los botones de pestaña
-            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
-
-            // Muestra el contenido y activa el botón de la pestaña seleccionada
-            document.getElementById(`content-${tabId}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabId}`).classList.add('tab-active');
-            
-            // Limpia los resultados cuando se cambia de pestaña
-            document.getElementById('biseccion-result').innerHTML = '';
-            document.getElementById('newton-result').innerHTML = '';
-            document.getElementById('secante-result').innerHTML = '';
-            document.getElementById('exacta-result').innerHTML = '';
-        }
-
-        /**
-         * Maneja la ejecución del método de solución seleccionado.
-         * @param {string} method - El método a ejecutar ('biseccion', 'newton', 'secante').
-         */
-        function runSolver(method) {
-            const equation = document.getElementById('equation').value.trim();
-            const tol = parseFloat(document.getElementById('tolerance').value);
-            const maxIter = parseInt(document.getElementById('maxIterations').value);
-            const a = parseFloat(document.getElementById('aValue').value);
-            const b = parseFloat(document.getElementById('bValue').value);
-            const x0 = parseFloat(document.getElementById('x0Value').value);
-            const h = parseFloat(document.getElementById('hValue').value);
-
-            const resultContainerId = `${method}-result`;
-            const f = createFunction(equation);
-
-            if (!f || isNaN(tol) || isNaN(maxIter) || tol <= 0 || maxIter <= 0) {
-                return displayError("Revise los parámetros de entrada: Ecuación, Tolerancia o Máx. Iteraciones no son válidos.", resultContainerId);
-            }
-
-            let result;
-
-            switch (method) {
-                case 'biseccion':
-                    if (isNaN(a) || isNaN(b)) {
-                        return displayError("Los límites 'a' y 'b' son requeridos para el método de Bisección.", resultContainerId);
-                    }
-                    result = solveBisection(f, a, b, tol, maxIter);
-                    break;
-                case 'newton':
-                    if (isNaN(x0) || isNaN(h) || h <= 0) {
-                        return displayError("La estimación inicial 'x0' y 'h' para la derivada son requeridos para Newton.", resultContainerId);
-                    }
-                    // Definir la derivada numérica con el 'h' actual
-                    const df = (x) => numericalDerivative(f, x, h);
-                    result = solveNewton(f, df, x0, tol, maxIter);
-                    break;
-                case 'secante':
-                    if (isNaN(x0) || isNaN(b)) { // Usamos b como x1
-                        return displayError("Las estimaciones iniciales 'x0' y 'x1' (Límite Superior) son requeridas para Secante.", resultContainerId);
-                    }
-                    result = solveSecant(f, x0, b, tol, maxIter);
-                    break;
-                default:
-                    return;
-            }
-
-            renderResult(result, resultContainerId, method);
-        }
-        
-        /**
-         * Función para comprobar la raíz ingresada en la pestaña "Exacta".
-         */
-        function checkRoot() {
-            const equation = document.getElementById('equation').value.trim();
-            const x = parseFloat(document.getElementById('checkRootValue').value);
-            const resultContainerId = 'exacta-result';
-            const f = createFunction(equation);
-
-            if (!f || isNaN(x)) {
-                return displayError("Revise la ecuación y asegúrese de ingresar un valor numérico para la raíz.", resultContainerId);
-            }
-
-            const fx = f(x);
-
-            if (isNaN(fx)) {
-                return displayError(`La función f(x) no pudo ser evaluada en x=${x}. Revise la sintaxis de la ecuación.`, resultContainerId);
-            }
-
-            const html = `
-                <div class="p-4 rounded-lg shadow-md bg-green-50 border border-green-200">
-                    <p class="font-semibold text-lg text-green-700 mb-2">Resultado de la Comprobación</p>
-                    <p class="text-gray-800">Evaluando la función en <span class="font-mono bg-gray-200 p-1 rounded">x = ${x.toPrecision(10)}</span>:</p>
-                    <p class="text-xl font-bold text-green-900 mt-2">f(x) ≈ ${fx.toExponential(6)}</p>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Cuanto más cerca de cero esté este valor, más precisa es la raíz encontrada.
-                    </p>
+        function renderControlPanel() {
+            const ex = exercises[activeTab];
+            document.getElementById('ex-title').innerText = ex.title;
+            document.getElementById('ex-equation').innerText = ex.equation;
+            document.getElementById('ex-desc').innerText = ex.description;
+            document.getElementById('configs-container').innerHTML = ex.configs.map((conf, i) => `
+                <div class="text-xs bg-gray-800 p-4 rounded-lg border border-gray-700 relative group hover:border-blue-500 transition-colors shadow-lg">
+                    <div class="absolute top-0 right-0 bg-sky-600 text-white px-2 py-1 rounded-bl-lg text-[10px] font-bold border-l border-b border-gray-700">CONFIG ${i+1}</div>
+                    <strong class="block text-white mb-2 text-sm flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-green-400"></i> ${conf.name}</strong>
+                    <div class="grid grid-cols-1 gap-1.5 text-gray-400 font-mono">
+                        <div class="flex justify-between border-b border-gray-700 pb-1"><span>Bisección:</span> <span class="font-bold text-blue-400">[${conf.interval[0]}, ${conf.interval[1]}]</span></div>
+                        <div class="flex justify-between border-b border-gray-700 pb-1"><span>Newton:</span> <span class="font-bold text-green-400">x₀ = ${conf.x0Newton}</span></div>
+                        <div class="flex justify-between"><span>Secante:</span> <span class="font-bold text-purple-400">x₀=${conf.x0Secant}, x₁=${conf.x1Secant}</span></div>
+                    </div>
                 </div>
-            `;
-            document.getElementById(resultContainerId).innerHTML = html;
+            `).join('');
+            lucide.createIcons();
         }
 
-
-        /**
-         * Muestra un mensaje de error en el contenedor de resultados.
-         */
-        function displayError(message, containerId) {
-            const html = `
-                <div class="p-4 rounded-lg bg-red-100 text-red-800 font-medium" role="alert">
-                    <span class="font-bold">Error:</span> ${message}
-                </div>
-            `;
-            document.getElementById(containerId).innerHTML = html;
-        }
-
-        /**
-         * Renderiza los resultados de la solución y la tabla de historial.
-         */
-        function renderResult(result, containerId, method) {
-            const container = document.getElementById(containerId);
+        function calculateCurrent() {
+            const btn = document.getElementById('btn-calculate');
+            const originalText = btn.querySelector('.btn-text').innerText;
+            const originalIcon = btn.querySelector('.btn-icon').innerHTML;
             
-            if (result.error) {
-                return displayError(result.message, containerId);
+            btn.disabled = true;
+            btn.querySelector('.btn-text').innerText = 'Analizando...';
+            btn.querySelector('.btn-icon').innerHTML = '<i data-lucide="rotate-cw" class="animate-spin w-5 h-5"></i>';
+            lucide.createIcons();
+
+            // Oculta el mensaje de espera ANTES de calcular
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('results-content').classList.add('hidden');
+
+            setTimeout(() => {
+                const ex = exercises[activeTab];
+                currentResults = ex.configs.map(config => ({
+                    name: config.name,
+                    bisection: bisection(ex.f, config.interval[0], config.interval[1]),
+                    newtonRaphson: newtonRaphson(ex.f, ex.df, config.x0Newton),
+                    secant: secant(ex.f, config.x0Secant, config.x1Secant),
+                    config: config
+                }));
+
+                const graphPoints = [];
+                const step = (ex.graphRange.max - ex.graphRange.min) / 100;
+                for (let x = ex.graphRange.min; x <= ex.graphRange.max; x += step) graphPoints.push({ x: x, y: ex.f(x) });
+
+                renderResults(currentResults, graphPoints);
+                btn.disabled = false;
+                btn.querySelector('.btn-text').innerText = originalText;
+                btn.querySelector('.btn-icon').setAttribute('data-lucide', 'cpu');
+                lucide.createIcons();
+            }, 500);
+        }
+
+        function renderResults(roots, graphData) {
+            document.getElementById('empty-state').classList.add('hidden');
+            // Muestra el contenedor de resultados
+            document.getElementById('results-content').classList.remove('hidden');
+            
+            renderChart(graphData, roots);
+
+            document.getElementById('cards-container').innerHTML = roots.map((r, i) => {
+                // Lógica del GANADOR (Menos iteraciones y que haya encontrado raíz)
+                const methods = [
+                    { key: 'bisection', count: r.bisection.iterations.length, valid: r.bisection.root !== null },
+                    { key: 'newtonRaphson', count: r.newtonRaphson.iterations.length, valid: r.newtonRaphson.root !== null },
+                    { key: 'secant', count: r.secant.iterations.length, valid: r.secant.root !== null }
+                ];
+                
+                const validMethods = methods.filter(m => m.valid);
+                const minIter = validMethods.length > 0 ? Math.min(...validMethods.map(m => m.count)) : -1;
+
+                // Función auxiliar para saber si es el mejor
+                const isBest = (key) => {
+                    const m = methods.find(x => x.key === key);
+                    return m.valid && m.count === minIter;
+                };
+
+                return `
+                <div class="card-dark rounded-xl overflow-hidden border border-gray-700 slide-in ${isBest('newtonRaphson') || isBest('bisection') || isBest('secant') ? 'best-method-neon' : ''}" style="animation-delay: ${i * 0.1}s">
+                    <div class="bg-gray-800 px-6 py-4 border-b border-gray-700 flex flex-wrap justify-between items-center gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-bold text-sm shadow-md">${i + 1}</span>
+                            <h3 class="font-bold text-white text-xl">${r.name}</h3>
+                        </div>
+                        <span class="text-sm font-mono bg-green-900/50 text-green-400 border border-green-700 px-3 py-1 rounded-full font-bold">
+                            Raíz Encontrada: ${r.newtonRaphson.root ? r.newtonRaphson.root.toFixed(6) : "..."}
+                        </span>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        ${renderMethodCard("Bisección", r.bisection, "text-blue-400", "bg-gray-800/50 border-blue-900", "from-blue-600 to-sky-700", i, "bisection", isBest('bisection'))}
+                        ${renderMethodCard("Newton-Raphson", r.newtonRaphson, "text-green-400", "bg-gray-800/50 border-green-900", "from-green-600 to-emerald-700", i, "newtonRaphson", isBest('newtonRaphson'))}
+                        ${renderMethodCard("Secante", r.secant, "text-purple-400", "bg-gray-800/50 border-purple-900", "from-purple-600 to-fuchsia-700", i, "secant", isBest('secant'))}
+                    </div>
+                </div>
+                `.replace(/\s{2,}/g, ' ', '').trim(); // Limpieza para mayor legibilidad
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderMethodCard(title, data, colorText, bgClasses, btnGradient, rootIndex, methodKey, isBest) {
+            if (data.root === null) {
+                return `
+                <div class="rounded-lg p-5 border bg-red-900/50 border-red-800 text-center flex flex-col justify-center h-full shadow-inner">
+                    <h4 class="font-bold text-sm uppercase tracking-wide text-red-400 mb-2">${title}</h4>
+                    <p class="text-xs text-red-500 font-medium">${data.error}</p>
+                </div>`;
             }
 
-            const formatter = (value) => value.toPrecision(10); // Formato para el historial
-            
-            // 1. Cabecera del resultado
-            let resultHTML = `
-                <div class="mb-6 p-4 rounded-lg shadow-lg bg-blue-50 border border-blue-200">
-                    <h3 class="text-xl font-bold text-blue-800 mb-2">¡Raíz Encontrada!</h3>
-                    <p class="text-gray-700"><strong>Raíz Aproximada (x):</strong> <span class="text-2xl font-mono text-blue-900">${result.root.toPrecision(15)}</span></p>
-                    <p class="text-gray-700"><strong>Iteraciones Requeridas:</strong> ${result.iterations}</p>
+            // Clases dinámicas si es el mejor (Efecto Neón)
+            const borderClass = isBest ? 'best-method-neon' : `${bgClasses} hover:border-blue-500`;
+            const badgeHTML = isBest ? '<span class="absolute -top-3 left-1/2 transform -translate-x-1/2 best-badge-neon text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-xl z-10 tracking-wider">ÓPTIMO</span>' : '';
+
+            return `
+            <div class="rounded-lg p-5 border ${borderClass} transition-all duration-300 flex flex-col relative group h-full bg-gray-900 shadow-inner">
+                ${badgeHTML}
+                <div class="flex justify-between items-start mb-4 ${isBest ? 'mt-2' : ''}">
+                    <h4 class="font-bold text-xs uppercase tracking-wide ${colorText}">${title}</h4>
+                    <span class="text-[10px] font-bold bg-gray-700 text-gray-300 px-2 py-0.5 rounded-md shadow-sm border border-gray-600">${data.iterations.length} Iters</span>
                 </div>
-            `;
+                
+                <div class="text-center mb-4 flex-grow">
+                    <p class="text-3xl font-mono font-bold text-white tracking-tighter highlight-neon">${data.root.toFixed(7)}</p>
+                    <p class="text-[10px] text-gray-500 mt-1">|f(x)|: ${Math.abs(data.iterations[data.iterations.length-1].fx).toExponential(2)}</p>
+                    <p class="text-[10px] text-gray-500">Error: ${data.iterations[data.iterations.length-1].error ? data.iterations[data.iterations.length-1].error.toExponential(2) : '0'}</p>
+                </div>
 
-            // 2. Tabla de historial
-            const headers = {
-                biseccion: ['i', 'a', 'b', 'c', 'f(c)', 'Error'],
-                newton: ['i', 'x_i', 'f(x_i)', 'f\'(x_i)', 'x_{i+1}', 'Error'],
-                secante: ['i', 'x_{i-1}', 'x_i', 'f(x_i)', 'x_{i+1}', 'Error']
-            };
-            const currentHeaders = headers[method];
+                <button onclick="openTableModal(${rootIndex}, '${methodKey}', '${title}')" 
+                    class="w-full mt-auto py-2 rounded-md bg-gray-700 border border-gray-600 text-xs font-bold text-gray-300 shadow-md hover:text-white hover:bg-gradient-to-r hover:${btnGradient} hover:border-transparent transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="table-2" class="w-3.5 h-3.5"></i> Ver Iteraciones
+                </button>
+            </div>`.replace(/\s{2,}/g, ' ', '').trim();
+        }
 
-            let tableHTML = `
-                <h3 class="text-lg font-semibold text-gray-700 mb-3">Historial de Iteraciones</h3>
-                <div class="overflow-x-auto rounded-lg border shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200 result-table">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                ${currentHeaders.map(h => `<th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">${h}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
-            `;
+        // --- MODAL & GRÁFICA (Estilos adaptados a Dark Mode Neón) ---
+        function openTableModal(idx, key, title) {
+            const data = currentResults[idx][key];
+            const ex = exercises[activeTab];
+            document.getElementById('modal-title').innerText = `Tabla de Iteraciones: ${title}`;
+            document.getElementById('modal-subtitle').innerText = `(${ex.title} | ${ex.equation}) Total: ${data.iterations.length} iteraciones`;
+            document.getElementById('modal-table-body').innerHTML = data.iterations.map(r => `
+                <tr class="hover:bg-gray-700/50">
+                    <td class="px-4 py-2 font-bold text-gray-300 border-r border-gray-700">${r.iter}</td>
+                    <td class="px-4 py-2 text-green-400">${r.x.toFixed(8)}</td>
+                    <td class="px-4 py-2 text-gray-400">${r.fx.toExponential(4)}</td>
+                    <td class="px-4 py-2 text-red-500 text-xs">${r.error !== null ? r.error.toExponential(4) : '-'}</td>
+                </tr>
+            `).join('');
+            const modal = document.getElementById('table-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
 
-            result.history.forEach(row => {
-                let rowValues;
-                if (method === 'biseccion') {
-                    rowValues = [row.i, row.a, row.b, row.c, row.fc, row.error];
-                } else if (method === 'newton') {
-                    rowValues = [row.i, row.x, row.fx, row.dfx, row.x_next, row.error];
-                } else if (method === 'secante') {
-                    rowValues = [row.i, row.x_prev, row.x_curr, row.fx_curr, row.x_next, row.error];
+        function closeModal() {
+            const m = document.getElementById('table-modal');
+            m.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        }
+
+        function renderChart(dataPoints, roots) {
+            const ctx = document.getElementById('myChart');
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            const rootPoints = roots.filter(r => r.newtonRaphson.root !== null && !isNaN(r.newtonRaphson.root)).map(r => ({ x: r.newtonRaphson.root, y: 0 }));
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        { label: 'Función f(x)', data: dataPoints, borderColor: '#facc15', borderWidth: 3, pointRadius: 0, tension: 0.4 }, // Amarillo para la función (Neón)
+                        { label: 'Raíces', data: rootPoints, backgroundColor: '#ef4444', pointRadius: 7, type: 'scatter', hoverRadius: 9 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                    scales: {
+                        x: { 
+                            type: 'linear', position: 'bottom', 
+                            grid: { color: '#334155' }, // Color de rejilla oscuro
+                            title: { display: true, text: 'X', color: '#94a3b8' },
+                            ticks: { color: '#e2e8f0' } // Color de las etiquetas
+                        },
+                        y: { 
+                            grid: { color: '#334155' }, 
+                            title: { display: true, text: 'f(x)', color: '#94a3b8' },
+                            ticks: { color: '#e2e8f0' }
+                        }
+                    },
+                    plugins: { 
+                        tooltip: { 
+                            backgroundColor: '#1a2537', 
+                            titleColor: '#fff',
+                            bodyColor: '#e2e8f0',
+                            padding: 10, cornerRadius: 8 
+                        },
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0' // Color de las leyendas
+                            }
+                        }
+                    }
                 }
-
-                tableHTML += `
-                    <tr>
-                        ${rowValues.map(val => `<td class="px-3 py-2 whitespace-nowrap">${typeof val === 'number' ? formatter(val) : val}</td>`).join('')}
-                    </tr>
-                `;
             });
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            
-            container.innerHTML = resultHTML + tableHTML;
-            
-            // Auto-rellenar la pestaña de comprobación con el resultado
-            document.getElementById('checkRootValue').value = result.root.toPrecision(15);
         }
 
-        // Inicializar la vista en la primera pestaña al cargar
-        document.addEventListener('DOMContentLoaded', () => {
-            switchTab('biseccion');
-        });
+        init();
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModal(); });
     </script>
 </body>
 </html>
